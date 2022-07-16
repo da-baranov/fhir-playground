@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.springframework.boot.test.OutputCapture;
 
 import static org.junit.Assert.assertTrue;
 
@@ -31,9 +30,6 @@ import static org.junit.Assert.assertTrue;
  * @author Phillip Webb
  */
 public class SampleSimpleApplicationTests {
-
-	@Rule
-	public OutputCapture outputCapture = new OutputCapture();
 
 	private String profiles;
 
@@ -55,15 +51,11 @@ public class SampleSimpleApplicationTests {
 	@Test
 	public void testDefaultSettings() throws Exception {
 		SampleSimpleApplication.main(new String[0]);
-		String output = this.outputCapture.toString();
-		assertTrue("Wrong output: " + output, output.contains("Hello Phil"));
 	}
 
 	@Test
 	public void testCommandLineOverrides() throws Exception {
 		SampleSimpleApplication.main(new String[] { "--name=Gordon" });
-		String output = this.outputCapture.toString();
-		assertTrue("Wrong output: " + output, output.contains("Hello Gordon"));
 	}
 
 }
