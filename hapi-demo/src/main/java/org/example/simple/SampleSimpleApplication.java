@@ -15,13 +15,10 @@
  */
 
 package org.example.simple;
+
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
 import ca.uhn.fhir.context.support.IValidationSupport;
-import ca.uhn.fhir.i18n.Msg;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
-import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
 import ca.uhn.fhir.validation.ValidationOptions;
 import org.hl7.fhir.common.hapi.validation.support.CommonCodeSystemsTerminologyService;
 import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
@@ -31,144 +28,152 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.sql.Struct;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.Objects;
 
-// @Configuration
+@Configuration
 // @EnableAutoConfiguration
 // @ComponentScan
 public class SampleSimpleApplication implements CommandLineRunner {
 
-	private class FileValidationSupport implements IValidationSupport {
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(SampleSimpleApplication.class, args);
+    }
 
-		public FileValidationSupport(FhirContext ctx)
-		{
-			myCtx = ctx;
-		}
-		private FhirContext myCtx = FhirContext.forR4();
+    public boolean dummyMethod() {
+        return true;
+    }
 
-		@Override
-		public <T extends IBaseResource> List<T> fetchAllStructureDefinitions() {
-			var xmlParser = myCtx.newXmlParser();
-			StructureDefinition structureDefinition = null;
-			try {
-				structureDefinition = (StructureDefinition) xmlParser.parseResource(new FileInputStream("c:/dev/simplifier/dabaranov/fhir-playground/CvSubject.StructureDefinition.xml"));
-			}
-			catch (FileNotFoundException fnfex) {
+    public void createAndValidatePerson() {
+        // Creating an instance of resource
+        var person = new Person();
+        person.setActive(true);
 
-			}
-			List<T> list = new ArrayList<T>();
-			T z = (T)structureDefinition;
-			list.add(z);
-			return list;
-		}
+        var nationalPassportId = person.addIdentifier();
+        nationalPassportId.setValue("4503 664903");
+        nationalPassportId.setSystem("https://aaa.com/a");
 
-		@Override
-		public IBaseResource fetchStructureDefinition(String theUrl) {
-			var xmlParser = myCtx.newXmlParser();
-			StructureDefinition structureDefinition = null;
-			try {
-				structureDefinition = (StructureDefinition) xmlParser.parseResource(new FileInputStream("c:/dev/simplifier/dabaranov/fhir-playground/CvSubject.StructureDefinition.xml"));
-			}
-			catch (FileNotFoundException fnfex) {
+        var internationalPassportId = person.addIdentifier();
+        internationalPassportId.setValue("9999 999999");
+        internationalPassportId.setSystem("https://aaa.com/b");
 
-			}
-			return structureDefinition;
-		}
+        var name = person.addName();
+        name.setUse(HumanName.NameUse.OFFICIAL);
+        name.setFamily("Baranov");
+        name.addGiven("Dmitry");
+        name.addGiven("Alex");
 
-		@Override
-		public FhirContext getFhirContext() {
-			return myCtx;
-		}
-	}
+        var phone = person.addTelecom();
+        phone.setSystem(ContactPoint.ContactPointSystem.PHONE);
+        phone.setValue("+79104301700");
 
-	// Simple example shows how a command line spring application can execute an
-	// injected bean service. Also demonstrates how you can use @Value to inject
-	// command line args ('--name=whatever') or application properties
-	@Override
-	public void run(String... args) {
-		// Register STAX
-		System.setProperty("javax.xml.stream.XMLInputFactory", "com.ctc.wstx.stax.WstxInputFactory");
-		System.setProperty("javax.xml.stream.XMLOutputFactory", "com.ctc.wstx.stax.WstxOutputFactory");
-		System.setProperty("javax.xml.stream.XMLEventFactory", "com.ctc.wstx.stax.WstxEventFactory");
+        var email = person.addTelecom();
+        email.setSystem(ContactPoint.ContactPointSystem.EMAIL);
+        email.setValue("d.a.baranov@gmail.com");
 
-		// Creating an instance of resource
-		var person = new Person();
-		person.setActive(true);
+        var path = "";
 
-		var nationalPassportId = person.addIdentifier();
-		nationalPassportId.setValue("4503 664903");
-		nationalPassportId.setSystem("https://aaa.com/a");
+        var validator = new FhirValidatorR4();
+        validator.validate(person, path, "https://example.org/fhir/StructureDefinition/CvSubject");
+    }
 
-		var internationalPassportId = person.addIdentifier();
-		internationalPassportId.setValue("9999 999999");
-		internationalPassportId.setSystem("https://aaa.com/b");
+    private void createAndValidatePatient() {
+        var path = "c:\\dev\\simplifier\\dabaranov\\fhir-playground\\CvPatient.StructureDefinition.xml";
+        var uri = "https://example.org/fhir/StructureDefinition/CvPatient";
+        var patient = new Patient();
+        var patientName = patient.addName();
+        patientName.setFamily("Baranov");
+        patientName.addGiven("Dmitry");
+        patientName.addGiven("Alexander");
+        patient.setActive(true);
+        var telecom = patient.addTelecom();
+        telecom.setSystem(ContactPoint.ContactPointSystem.PHONE);
+        telecom.setValue("+79104301700");
 
-		var name = person.addName();
-		name.setUse(HumanName.NameUse.OFFICIAL);
-		name.setFamily("Baranov");
-		name.addGiven("Dmitry");
-		name.addGiven("Alex");
+        var snn = new Extension();
+        snn.setUrl("https://example.org/fhir/StructureDefinition/CvSnn");
+        var str = new StringType();
+        str.setValue("111-111-111 11");
+        snn.setValue(str);
+        patient.addExtension(snn);
 
-		var phone = person.addTelecom();
-		phone.setSystem(ContactPoint.ContactPointSystem.PHONE);
-		phone.setValue("+79104301700");
+        var validator = new FhirValidatorR4();
+        validator.validate(patient, path, uri);
+    }
 
-		var email = person.addTelecom();
-		email.setSystem(ContactPoint.ContactPointSystem.EMAIL);
-		email.setValue("d.a.baranov@gmail.com");
+    private void createAndValidateVitalSigns() {
+        var path = "C:\\dev\\simplifier\\dabaranov\\fhir-playground\\OutburnObservationVitalSigns.StructureDefinition.xml";
+        var uri = "https://example.org/fhir/StructureDefinition/OutburnObservationVitalSigns";
 
-		// Converting the object to JSON
-		var ctx = FhirContext.forR4();
-		var parser = ctx.newJsonParser();
-		var xmlParser = ctx.newXmlParser();
-		var json = parser.encodeResourceToString(person);
-		System.out.println(json);
+        var observation = new Observation();
+        observation.setStatus(Observation.ObservationStatus.REGISTERED);
+        var observationCode = new CodeableConcept();
+        var observationCoding = observationCode.addCoding();
+        observationCoding.setSystem("https://outburn.co.il");
+        observationCoding.setCode("000001");
+        observation.setCode(observationCode);
 
-		// Validating the object against custom FHIR profile
-		// Good video on https://www.youtube.com/watch?v=nIEK53ivNXY
-		// See also https://groups.google.com/g/hapi-fhir/c/8Kf0Y6FWyrU
-		// See also https://groups.google.com/g/hapi-fhir/c/BLacObKjtqw
-		// See also https://groups.google.com/g/hapi-fhir/c/0hUGgBO2Xbo
+        // Heart rate
+        var componentPulse = new Observation.ObservationComponentComponent();
+        componentPulse.setCode(new CodeableConcept());
+        componentPulse.getCode().setText("Heart rate");
+        componentPulse.getCode().addCoding();
+        componentPulse.getCode().getCoding().get(0).setCode("8867-4");
+        componentPulse.getCode().getCoding().get(0).setSystem("http://loinc.org");
+        var pulseValue = new Quantity();
+        pulseValue.setValue(60);
+        pulseValue.setUnit("/min");
+        componentPulse.setValue(pulseValue);
+        observation.addComponent(componentPulse);
 
-		var fileValidationSupport = new FileValidationSupport(ctx);
-		var defaultProfileValidationSupport = new DefaultProfileValidationSupport(ctx);
-		var inMemoryTerminologyServerValidationSupport = new InMemoryTerminologyServerValidationSupport(ctx);
-		var commonCodeSystemsTerminologyService = new CommonCodeSystemsTerminologyService(ctx);
-		ValidationSupportChain validationSupportChain = new ValidationSupportChain(
-				defaultProfileValidationSupport,
-				fileValidationSupport
-				//inMemoryTerminologyServerValidationSupport,
-				//commonCodeSystemsTerminologyService
-		);
+        var componentSaturation = new Observation.ObservationComponentComponent();
+        componentSaturation.setCode(new CodeableConcept());
+        componentSaturation.getCode().setText("Saturation");
+        componentSaturation.getCode().addCoding();
+        componentSaturation.getCode().getCoding().get(0).setCode("2708-6");
+        componentSaturation.getCode().getCoding().get(0).setSystem("http://loinc.org");
+        var saturationValue = new Quantity();
+        saturationValue.setValue(99);
+        saturationValue.setUnit("%");
+        componentSaturation.setValue(saturationValue);
+        observation.addComponent(componentSaturation);
 
-		var validator = ctx.newValidator();
-		var instanceValidator = new FhirInstanceValidator(validationSupportChain);
-		validator.registerValidatorModule(instanceValidator);
+        var validator = new FhirValidatorR4();
+        validator.validate(observation, path, uri);
+    }
 
-		var validationOptions = new ValidationOptions();
-		// validationOptions.addProfile("https://example.org/fhir/StructureDefinition/CvSubject");
-		person.getMeta().addProfile("https://example.org/fhir/StructureDefinition/CvSubject");
+    private void createAndValidatePatientEE() {
+        var path = "c:\\dev\\simplifier\\ee-base\\Profiles\\StructureDefinition-EEBase-Patient.xml";
+        var uri = "https://hl7.ee/fhir/StructureDefinition/EEBase-Patient";
+        var patient = new Patient();
+        var id1 = patient.addIdentifier();
+        var id2 = patient.addIdentifier();
+        var cc = new CodeableConcept();
+        var coding = cc.addCoding();
+        coding.setSystem("http://hl7.org/fhir/ValueSet/identifier-type");
+        coding.setCode("MR");
 
-		var result = validator.validateWithResult(person, validationOptions);
-		var operationOutcome = result.toOperationOutcome();
-		for (var next : result.getMessages()) {
-			System.out.println(next.getLocationString() + " " + next.getMessage());
-		}
-	}
+        id1.setUse(Identifier.IdentifierUse.OFFICIAL);
+        id1.setType(cc);
+        id1.setSystem("https://hl7.ee/NamingSystem/ee-pid-id");
+        id1.setValue("123");
 
-	public static void main(String[] args) throws Exception {
-		SpringApplication.run(SampleSimpleApplication.class, args);
-	}
+        id2.setUse(Identifier.IdentifierUse.OFFICIAL);
+        id2.setType(cc);
+        id2.setValue("456");
+
+        patient.setActive(true);
+
+        var validator = new FhirValidatorR4();
+        validator.validate(patient, path, uri);
+    }
+
+    // Simple example shows how a command line spring application can execute an
+    // injected bean service. Also demonstrates how you can use @Value to inject
+    // command line args ('--name=whatever') or application properties
+    @Override
+    public void run(String... args) {
+        createAndValidateVitalSigns();
+    }
 }
