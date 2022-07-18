@@ -3,6 +3,7 @@ package org.example.simple;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
 import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.ValidationOptions;
 import org.hl7.fhir.common.hapi.validation.support.CommonCodeSystemsTerminologyService;
 import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
@@ -10,15 +11,21 @@ import org.hl7.fhir.common.hapi.validation.support.ValidationSupportChain;
 import org.hl7.fhir.common.hapi.validation.validator.FhirInstanceValidator;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+/**
+ * Provides validation of an in-memory resource instance against a profile
+ */
 public class FhirValidatorR4 {
 
     private final FhirContext fhirContext;
     private final IParser jsonParser;
     private final IParser xmlParser;
     private final FileValidationSupport fileValidationSupport;
+    private final List<FhirValidatorMessage> messages = new ArrayList<>();
 
     public FhirValidatorR4() {
         // Registering STAX
@@ -37,10 +44,44 @@ public class FhirValidatorR4 {
         xmlParser.setPrettyPrint(true);
     }
 
-    public void validate(IBaseResource resource, String pathToStructureDefinition, String profileUri) {
+    /**
+     * Loads StructureDefinition from a local file
+     * @param path Path to the file
+     * @return StructureDefinition URL
+     */
+    public String loadStructureDefinitionFromFile(String path) {
+        try {
+            return fileValidationSupport.loadStructureDefinitionFromFile(path);
+        }
+        catch (IOException fnex) {
+            throw new RuntimeException("Unexpected IOException: " + path, fnex);
+        }
+    }
+
+    /**
+     * Loads StructureDefinition from the Internet
+     * @param url Resource URL
+     * @return URL of loaded StructureDefinition
+     */
+    public String loadStructureDefinitionFromUrl(String url) {
+        try {
+            return fileValidationSupport.loadStructureDefinitionFromUrl(url);
+        }
+        catch (IOException ioex) {
+            throw new RuntimeException("Unexpected IOException: " + url, ioex);
+        }
+    }
+
+    /**
+     * Provides validation of the resource agaist profile
+     * @param resource In-memory resource instance
+     * @param profileUri StructureDefinition URL
+     */
+    public void validate(IBaseResource resource, String profileUri) {
+
+        messages.clear();
 
         Objects.requireNonNull(resource);
-        Objects.requireNonNull(pathToStructureDefinition);
 
         var json = jsonParser.encodeResourceToString(resource);
         System.out.println(json);
@@ -50,12 +91,6 @@ public class FhirValidatorR4 {
         // See also https://groups.google.com/g/hapi-fhir/c/8Kf0Y6FWyrU
         // See also https://groups.google.com/g/hapi-fhir/c/BLacObKjtqw
         // See also https://groups.google.com/g/hapi-fhir/c/0hUGgBO2Xbo
-
-        try {
-            fileValidationSupport.loadStructureDefinitionFromFile(pathToStructureDefinition);
-        } catch (FileNotFoundException fnex) {
-            throw new RuntimeException("File " + pathToStructureDefinition + " not found", fnex);
-        }
 
         var defaultProfileValidationSupport = new DefaultProfileValidationSupport(fhirContext);
         var inMemoryTerminologyServerValidationSupport = new InMemoryTerminologyServerValidationSupport(fhirContext);
@@ -78,7 +113,55 @@ public class FhirValidatorR4 {
         // also can be converted to OperationOutcome:
         //      var operationOutcome = result.toOperationOutcome();
         for (var next : result.getMessages()) {
-            System.out.println(next.getSeverity() + " : " + next.getLocationString() + " : " + next.getMessage());
+            var message = new FhirValidatorMessage();
+            message.Severity = next.getSeverity();
+            message.LocationString = next.getLocationString();
+            message.Message = next.getMessage();
+            this.messages.add(message);
         }
+    }
+
+
+    /**
+     * Returns a list of validator messages
+     * @return
+     */
+    public List<FhirValidatorMessage> getMessages() {
+        return messages;
+    }
+
+    /**
+     * Writes validation log to the console
+     * @return
+     */
+    public String dump() {
+        var sb = new StringBuilder();
+        if (!hasErrors()) {
+            sb.append("Congrats! No problems found!");
+            sb.append("\r\n");
+        }
+        else {
+            sb.append("No congrats :( Found some problems.");
+            for (var message : messages) {
+                sb.append(message.Severity + " : " + message.Message + " : " + message.LocationString);
+                sb.append("\r\n");
+            }
+        }
+        System.out.println(sb.toString());
+        return sb.toString();
+    }
+
+    /**
+     * Returns true if the validation has been not successful
+     * @return
+     */
+    public boolean hasErrors() {
+        for (var message : messages) {
+            if (message.Severity == ResultSeverityEnum.ERROR ||
+                    message.Severity == ResultSeverityEnum.FATAL) {
+                return true;
+            }
+        }
+        return false;
     }
 }

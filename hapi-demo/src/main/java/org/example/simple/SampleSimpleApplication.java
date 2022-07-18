@@ -16,105 +16,40 @@
 
 package org.example.simple;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
-import ca.uhn.fhir.context.support.IValidationSupport;
-import ca.uhn.fhir.validation.ValidationOptions;
-import org.hl7.fhir.common.hapi.validation.support.CommonCodeSystemsTerminologyService;
-import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
-import org.hl7.fhir.common.hapi.validation.support.ValidationSupportChain;
-import org.hl7.fhir.common.hapi.validation.validator.FhirInstanceValidator;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Configuration;
-import java.io.FileNotFoundException;
-import java.util.Objects;
+import java.util.Calendar;
 
 @Configuration
 // @EnableAutoConfiguration
 // @ComponentScan
+// http://hl7.org/fhir/vitalsigns.html
 public class SampleSimpleApplication implements CommandLineRunner {
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(SampleSimpleApplication.class, args);
     }
 
-    public boolean dummyMethod() {
-        return true;
-    }
-
-    public void createAndValidatePerson() {
-        // Creating an instance of resource
-        var person = new Person();
-        person.setActive(true);
-
-        var nationalPassportId = person.addIdentifier();
-        nationalPassportId.setValue("4503 664903");
-        nationalPassportId.setSystem("https://aaa.com/a");
-
-        var internationalPassportId = person.addIdentifier();
-        internationalPassportId.setValue("9999 999999");
-        internationalPassportId.setSystem("https://aaa.com/b");
-
-        var name = person.addName();
-        name.setUse(HumanName.NameUse.OFFICIAL);
-        name.setFamily("Baranov");
-        name.addGiven("Dmitry");
-        name.addGiven("Alex");
-
-        var phone = person.addTelecom();
-        phone.setSystem(ContactPoint.ContactPointSystem.PHONE);
-        phone.setValue("+79104301700");
-
-        var email = person.addTelecom();
-        email.setSystem(ContactPoint.ContactPointSystem.EMAIL);
-        email.setValue("d.a.baranov@gmail.com");
-
-        var path = "";
-
-        var validator = new FhirValidatorR4();
-        validator.validate(person, path, "https://example.org/fhir/StructureDefinition/CvSubject");
-    }
-
-    private void createAndValidatePatient() {
-        var path = "c:\\dev\\simplifier\\dabaranov\\fhir-playground\\CvPatient.StructureDefinition.xml";
-        var uri = "https://example.org/fhir/StructureDefinition/CvPatient";
-        var patient = new Patient();
-        var patientName = patient.addName();
-        patientName.setFamily("Baranov");
-        patientName.addGiven("Dmitry");
-        patientName.addGiven("Alexander");
-        patient.setActive(true);
-        var telecom = patient.addTelecom();
-        telecom.setSystem(ContactPoint.ContactPointSystem.PHONE);
-        telecom.setValue("+79104301700");
-
-        var snn = new Extension();
-        snn.setUrl("https://example.org/fhir/StructureDefinition/CvSnn");
-        var str = new StringType();
-        str.setValue("111-111-111 11");
-        snn.setValue(str);
-        patient.addExtension(snn);
-
-        var validator = new FhirValidatorR4();
-        validator.validate(patient, path, uri);
-    }
-
-    private void createAndValidateVitalSigns() {
-        var path = "C:\\dev\\simplifier\\dabaranov\\fhir-playground\\OutburnObservationVitalSigns.StructureDefinition.xml";
-        var uri = "https://example.org/fhir/StructureDefinition/OutburnObservationVitalSigns";
-
+    public Observation createValidBatteryObservation() {
+        // An observation
         var observation = new Observation();
+
+        // Observation status
         observation.setStatus(Observation.ObservationStatus.REGISTERED);
+
+        // Observation code
         var observationCode = new CodeableConcept();
         var observationCoding = observationCode.addCoding();
         observationCoding.setSystem("https://outburn.co.il");
         observationCoding.setCode("000001");
         observation.setCode(observationCode);
 
-        // Heart rate
+        // Date and time of observation (with time zone)
+        observation.setEffective(new InstantType(Calendar.getInstance()));
+
+        // Heart rate (pulse) component
         var componentPulse = new Observation.ObservationComponentComponent();
         componentPulse.setCode(new CodeableConcept());
         componentPulse.getCode().setText("Heart rate");
@@ -122,11 +57,12 @@ public class SampleSimpleApplication implements CommandLineRunner {
         componentPulse.getCode().getCoding().get(0).setCode("8867-4");
         componentPulse.getCode().getCoding().get(0).setSystem("http://loinc.org");
         var pulseValue = new Quantity();
-        pulseValue.setValue(60);
+        pulseValue.setValue(-1);
         pulseValue.setUnit("/min");
         componentPulse.setValue(pulseValue);
         observation.addComponent(componentPulse);
 
+        // Saturation (blood) component
         var componentSaturation = new Observation.ObservationComponentComponent();
         componentSaturation.setCode(new CodeableConcept());
         componentSaturation.getCode().setText("Saturation");
@@ -139,34 +75,123 @@ public class SampleSimpleApplication implements CommandLineRunner {
         componentSaturation.setValue(saturationValue);
         observation.addComponent(componentSaturation);
 
-        var validator = new FhirValidatorR4();
-        validator.validate(observation, path, uri);
+        return observation;
     }
 
-    private void createAndValidatePatientEE() {
-        var path = "c:\\dev\\simplifier\\ee-base\\Profiles\\StructureDefinition-EEBase-Patient.xml";
-        var uri = "https://hl7.ee/fhir/StructureDefinition/EEBase-Patient";
-        var patient = new Patient();
-        var id1 = patient.addIdentifier();
-        var id2 = patient.addIdentifier();
-        var cc = new CodeableConcept();
-        var coding = cc.addCoding();
-        coding.setSystem("http://hl7.org/fhir/ValueSet/identifier-type");
-        coding.setCode("MR");
+    public Observation createValidPulseObservation() {
+        var observation = new Observation();
 
-        id1.setUse(Identifier.IdentifierUse.OFFICIAL);
-        id1.setType(cc);
-        id1.setSystem("https://hl7.ee/NamingSystem/ee-pid-id");
-        id1.setValue("123");
+        // Fixed code
+        observation.setCode(new CodeableConcept());
+        var coding = observation.getCode().addCoding();
+        coding.setSystem("http://loinc.org");
+        coding.setCode("8867-4");
 
-        id2.setUse(Identifier.IdentifierUse.OFFICIAL);
-        id2.setType(cc);
-        id2.setValue("456");
+        // Fixed category
+        observation.addCategory(new CodeableConcept());
+        var categoryCode = observation.getCategory().get(0).addCoding();
+        categoryCode.setSystem("http://terminology.hl7.org/CodeSystem/observation-category");
+        categoryCode.setCode("vital-signs");
 
-        patient.setActive(true);
+        // Patient is required
+        var patientReference = new Reference();
+        patientReference.setType("Patient");
+        patientReference.setIdentifier(new Identifier().setSystem("urn:oid:1.2.3.4").setValue("123-123"));
+        patientReference.setDisplay("Dmitry Baranov");
+        observation.setSubject(patientReference);
+
+        // Status is required
+        observation.setStatus(Observation.ObservationStatus.REGISTERED);
+
+        // Value is required, and value unit must be present in a valueset
+        var value = new Quantity();
+        value.setValue(60);
+        value.setSystem("http://unitsofmeasure.org");
+        value.setUnit("beats/min");
+        value.setCode("/min");
+        observation.setValue(value);
+
+        // Left shoulder (body site) = 91775009
+        // Right shoulder (body site) = 91774008
+        // Left wrist = 5951000
+        // Right wrist = 9736006
+        var bodySite = new CodeableConcept();
+        var bodySiteCoding = bodySite.addCoding();
+        bodySiteCoding.setSystem("http://snomed.info/sct");
+        bodySiteCoding.setCode("9736006");
+        observation.setBodySite(bodySite);
+
+        return observation;
+    }
+
+    public Observation createValidBloodOxygenSaturationObservation() {
+        var observation = new Observation();
+
+        // Fixed code
+        observation.setCode(new CodeableConcept());
+        var coding = observation.getCode().addCoding();
+        coding.setSystem("http://loinc.org");
+        coding.setCode("2708-6");
+
+        // Fixed category
+        observation.addCategory(new CodeableConcept());
+        var categoryCode = observation.getCategory().get(0).addCoding();
+        categoryCode.setSystem("http://terminology.hl7.org/CodeSystem/observation-category");
+        categoryCode.setCode("vital-signs");
+
+        // Patient is required
+        var patientReference = new Reference();
+        patientReference.setType("Patient");
+        patientReference.setReference("Patient/123");
+        patientReference.setIdentifier(new Identifier().setSystem("urn:oid:1.2.3.4").setValue("123-123"));
+        patientReference.setDisplay("Dmitry Baranov");
+        observation.setSubject(patientReference);
+
+        // Status is required
+        observation.setStatus(Observation.ObservationStatus.REGISTERED);
+
+        // Value is required, and value unit must be present in a valueset
+        var value = new Quantity();
+        value.setValue(99);
+        value.setSystem("http://unitsofmeasure.org");
+        value.setUnit("%");
+        value.setCode("%");
+        observation.setValue(value);
+
+        return observation;
+    }
+
+    private void createAndValidatePulseObservation()
+    {
+        var observation = createValidPulseObservation();
 
         var validator = new FhirValidatorR4();
-        validator.validate(patient, path, uri);
+        var url = validator.loadStructureDefinitionFromFile("C:\\dev\\simplifier\\dabaranov\\fhir-playground\\OutburnObservationPulse.StructureDefinition.xml ");
+        validator.validate(observation, url);
+
+        validator.dump();
+    }
+
+    private void createAndValidateBloodOxygenSaturationObservation()
+    {
+        var observation = createValidBloodOxygenSaturationObservation();
+
+        var validator = new FhirValidatorR4();
+        var url = validator.loadStructureDefinitionFromFile("C:\\dev\\simplifier\\dabaranov\\fhir-playground\\OutburnObservationSaturation.StructureDefinition.xml");
+        validator.validate(observation, url);
+
+        validator.dump();
+    }
+
+    private void createAndValidateVitalSignsBatteryObservation() {
+
+        var observation = createValidBatteryObservation();
+
+        var validator = new FhirValidatorR4();
+        validator.loadStructureDefinitionFromFile(Constants.OBSERVATION_PROFILE_LOCAL_PATH);
+        validator.validate(observation, Constants.OBSERVATION_PROFILE_URI);
+
+        validator.dump();
     }
 
     // Simple example shows how a command line spring application can execute an
@@ -174,6 +199,7 @@ public class SampleSimpleApplication implements CommandLineRunner {
     // command line args ('--name=whatever') or application properties
     @Override
     public void run(String... args) {
-        createAndValidateVitalSigns();
+
+        createAndValidateBloodOxygenSaturationObservation();
     }
 }

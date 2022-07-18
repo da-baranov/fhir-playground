@@ -7,11 +7,15 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.StructureDefinition;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Implementation of IValidationSupports that can load Profiles from file or from URL
+ */
 public class FileValidationSupport implements IValidationSupport {
 
     private final FhirContext fhirContext;
@@ -27,11 +31,25 @@ public class FileValidationSupport implements IValidationSupport {
         this.xmlParser = this.fhirContext.newXmlParser();
     }
 
-    public String loadStructureDefinitionFromFile(String path) throws FileNotFoundException {
-        var structureDefinition = (StructureDefinition) xmlParser.parseResource(new FileInputStream(path));
-        var url = structureDefinition.getUrl();
-        this.structureDefinitions.put(url, structureDefinition);
-        return url;
+    public String loadStructureDefinitionFromFile(String path) throws IOException {
+        try (var inputStream = new FileInputStream(path)) {
+            var structureDefinition = (StructureDefinition) xmlParser.parseResource(inputStream);
+            var url = structureDefinition.getUrl();
+            this.structureDefinitions.put(url, structureDefinition);
+            return url;
+        }
+    }
+
+    public String loadStructureDefinitionFromUrl(String uri)
+            throws IOException {
+        var url = new URL(uri);
+        var connection = url.openConnection();
+        try (var inputStream = connection.getInputStream()) {
+            var structureDefinition = (StructureDefinition) xmlParser.parseResource(inputStream);
+            var sdUrl = structureDefinition.getUrl();
+            this.structureDefinitions.put(sdUrl, structureDefinition);
+            return sdUrl;
+        }
     }
 
     @Override
