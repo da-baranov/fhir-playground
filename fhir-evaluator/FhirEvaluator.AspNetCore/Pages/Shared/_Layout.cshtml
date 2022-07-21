@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FhirEvaluator.AspNetCore</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/FhirEvaluator.AspNetCore.styles.css" asp-append-version="true" />   
+
+    <script src="~/lib/font-awesome/js/all.js"></script>
+    <link rel="stylesheet" href="~/lib/font-awesome/css/all.css" />
+
+    <environment include="Development">
+        <script src="~/lib/ace/ace.js"></script>
+        <script src="~/lib/ace/ext-beautify.js"></script>
+        <script src="~/lib/ace/mode-json.js"></script>
+        <script src="~/lib/ace/mode-json5.js"></script>
+        <script src="~/lib/ace/mode-html.js"></script>
+        <script src="~/lib/ace/theme-chrome.js"></script>
+    </environment>
+
+    <environment include="Production">
+    
+    </environment>
+    @RenderSection("scripts", required: false)
+</head>
+<body>
+    @RenderBody()
+</body>
+</html>
