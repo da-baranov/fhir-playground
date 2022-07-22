@@ -1,18 +1,43 @@
-/*
- * This file launches the application by asking Ext JS to create
- * and launch() the Application class.
- */
 Ext.application({
     extend: 'FHIRata.Application',
-
-    name: 'FHIRata',
-
     requires: [
-        // This will automatically load all classes in the FHIRata namespace
-        // so that application classes do not need to require each other.
-        'FHIRata.*'
+        'FHIRata.view.Viewport',
+        'FHIRata.Util'
     ],
+    name: 'FHIRata',
+    mainView: 'FHIRata.view.Viewport',
 
-    // The name of the initial view to create.
-    mainView: 'FHIRata.view.main.Main'
+    user: undefined,
+
+    launch: function () {
+
+        Ext.tip.QuickTipManager.init();
+
+        Ext.state.Manager.setProvider(Ext.create("Ext.state.LocalStorageProvider"));
+        Ext.Ajax.timeout = 120000;
+        Ext.Ajax.useDefaultXhrHeader = false;
+        Ext.Ajax.cors = true;
+
+        // Global Ext error handler
+        Ext.Error.handle = function (err) {
+            try {
+                FHIRata.Util.errorMessageBox(err);
+                console.log(err);
+            } catch (e) {
+                console.error(err);
+            }
+        };
+
+        // Global window error handler
+        window.addEventListener("error", function (event) {
+            if (!extReady) {
+                alert(event.message);
+                console.log(event);
+            } else {
+                FHIRata.Util.errorMessageBox(event);
+                console.log(event);
+            }
+        });
+        console.log("Started");
+    }
 });

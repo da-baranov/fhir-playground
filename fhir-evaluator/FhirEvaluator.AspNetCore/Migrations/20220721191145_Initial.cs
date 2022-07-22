@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FhirEvaluator.AspNetCore.Migrations
+namespace Fhirata.AspNetCore.Migrations
 {
     public partial class Initial : Migration
     {

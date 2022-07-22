@@ -7,16 +7,16 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["FhirEvaluator.AspNetCore/FhirEvaluator.AspNetCore.csproj", "FhirEvaluator.AspNetCore/"]
-RUN dotnet restore "FhirEvaluator.AspNetCore/FhirEvaluator.AspNetCore.csproj"
+COPY ["Fhirata.AspNetCore/Fhirata.AspNetCore.csproj", "Fhirata.AspNetCore/"]
+RUN dotnet restore "Fhirata.AspNetCore/Fhirata.AspNetCore.csproj"
 COPY . .
-WORKDIR "/src/FhirEvaluator.AspNetCore"
-RUN dotnet build "FhirEvaluator.AspNetCore.csproj" -c Release -o /app/build
+WORKDIR "/src/Fhirata.AspNetCore"
+RUN dotnet build "Fhirata.AspNetCore.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "FhirEvaluator.AspNetCore.csproj" -c Release -o /app/publish
+RUN dotnet publish "Fhirata.AspNetCore.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "FhirEvaluator.AspNetCore.dll"]
+ENTRYPOINT ["dotnet", "Fhirata.AspNetCore.dll"]

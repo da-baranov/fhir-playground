@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FhirEvaluator.AspNetCore", "FhirEvaluator.AspNetCore\FhirEvaluator.AspNetCore.csproj", "{1D32B933-5D35-48AA-B6B8-9D1AB791345E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fhirata.AspNetCore", "FhirEvaluator.AspNetCore\Fhirata.AspNetCore.csproj", "{1D32B933-5D35-48AA-B6B8-9D1AB791345E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

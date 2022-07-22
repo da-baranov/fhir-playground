@@ -1,95 +1,99 @@
-/**
- * This class is the main view for the application. It is specified in app.js as the
- * "mainView" property. That setting automatically applies the "viewport"
- * plugin causing this view to become the body element (i.e., the viewport).
- *
- * TODO - Replace this content of this view to suite the needs of your application.
- */
 Ext.define('FHIRata.view.main.Main', {
-    extend: 'Ext.tab.Panel',
+    extend: 'Ext.panel.Panel',
     xtype: 'app-main',
 
     requires: [
-        'Ext.plugin.Viewport',
         'Ext.window.MessageBox',
-
         'FHIRata.view.main.MainController',
         'FHIRata.view.main.MainModel',
-        'FHIRata.view.main.List',
-        'FHIRata.view.PlaygroundView'
+        'FHIRata.view.MappingsList'
     ],
 
     controller: 'main',
     viewModel: 'main',
+    layout: 'fit',
 
-    ui: 'navigation',
-
-    tabBarHeaderPosition: 1,
-    titleRotation: 0,
-    tabRotation: 0,
-
-    header: {
-        layout: {
-            align: 'stretchmax'
+    tbar: [
+        {
+            xtype: 'tbspacer',
+            width: 10
         },
-        title: {
+        {
+            xtype: 'image',
+            height: 37,
+            // src: 'https://fhir.org/assets/images/HL7_FHIR-stacked_1_0_0.png'
+            src: 'https://outburn.co.il/wp-content/uploads/2022/01/logo_outburn.png'
+        },
+        {
+            xtype: 'tbspacer',
+            width: 20
+        },
+        {
+            xtype: 'label',
+            html: '<b>FHIRata expressions testing tool</b>'
+        },
+        '->',
+        {
+            text: 'Swagger',
+            iconCls: 'fa fa-code',
+            handler: function () {
+                window.open(
+                    window.EXT_BASE_PATH.endsWith("/") ?
+                        window.EXT_BASE_PATH + "swagger" :
+                        window.EXT_BASE_PATH + "/swagger", "_blank");
+            }
+        },
+        '-',
+        {
+            iconCls: 'fa fa-user',
+            text: 'Register',
+            handler: 'onCommandRegister',
             bind: {
-                text: '{name}'
-            },
-            flex: 0
+                hidden: '{user.isAuthenticated}'
+            }
         },
-        iconCls: 'fa-th-list'
-    },
-
-    tabBar: {
-        flex: 1,
-        layout: {
-            align: 'stretch',
-            overflowHandler: 'none'
-        }
-    },
-
-    responsiveConfig: {
-        tall: {
-            headerPosition: 'top'
+        {
+            iconCls: 'fa fa-user',
+            text: 'Login',
+            handler: 'onCommandLogin',
+            bind: {
+                hidden: '{user.isAuthenticated}'
+            }
         },
-        wide: {
-            headerPosition: 'left'
-        }
-    },
-
-    defaults: {
-        bodyPadding: 4,
-        tabConfig: {
-            responsiveConfig: {
-                wide: {
-                    iconAlign: 'left',
-                    textAlign: 'left'
-                },
-                tall: {
-                    iconAlign: 'top',
-                    textAlign: 'center',
-                    width: 120
-                }
+        {
+            iconCls: 'fa fa-cogs',
+            text: 'Settings',
+            handler: 'onCommandSettings',
+            bind: {
+                text: 'Settings',
+                hidden: '{!user.isAuthenticated}'
+            }
+        },
+        {
+            iconCls: 'fa fa-arrow-right',
+            text: 'Logout',
+            handler: 'onCommandLogout',
+            bind: {
+                text: 'Logout ({user.email})',
+                hidden: '{!user.isAuthenticated}'
             }
         }
-    },
+    ],
 
-    items: [
+    items: [ 
         {
-            title: 'Playground',
-            iconCls: 'fa-home',
-            layout: 'border',
-            items: [
-                {
-                    xtype: 'playgroundview',
-                    region: "center"
-                }
-            ]
-        }, {
-            title: 'About',
-            iconCls: 'fa-user',
-            layout: "border"
+            xtype: 'mappingslist',
+            hidden: true
+        },
+        {
+            xtype: 'container',
+            hidden: true,
+            html:
+                '<div style="padding:30px">' +
+                '<h2>FHIR in Israel</h2>' +
+                '<p>The history of HL7’s Fast Healthcare Interoperability Resources (FHIR) standard implementation in Israel begun around 2018, where Israel’s second largest Health Maintenance Organization (HMO), Maccabi Health Care Services, has announced it would start using FHIR resources as the basis for its new Operational Data Hub (ODH) data model. This can be considered as an implementation of FHIR’s “Persistent Store” exchange mechanism.</p>' +
+                '<p>The director of Maccabi’s medical division at the time was Professor Nachman Ash(Today the Director General of the Ministry of Health Israel), who believed medical data standardization & interoperability would greatly benefit Maccabi specifically, and the entire Israeli healthcare system in general.</p>' +
+                '</div>'
         }
     ]
 });

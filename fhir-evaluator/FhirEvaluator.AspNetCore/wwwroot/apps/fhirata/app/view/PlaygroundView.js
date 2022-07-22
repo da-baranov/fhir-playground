@@ -1,4 +1,4 @@
-Ext.define('FHIRata.view.PlaygroundView',{
+Ext.define('FHIRata.view.PlaygroundView', {
     extend: 'Ext.panel.Panel',
     alias: 'widget.playgroundview',
 
@@ -6,7 +6,7 @@ Ext.define('FHIRata.view.PlaygroundView',{
         'FHIRata.view.PlaygroundViewController',
         'FHIRata.view.PlaygroundViewModel',
         'FHIRata.component.CodeEditor',
-        'FHIRata.view.SettingsDialog'
+        'FHIRata.model.Mapping'
     ],
 
     controller: 'playgroundview',
@@ -16,60 +16,92 @@ Ext.define('FHIRata.view.PlaygroundView',{
 
     layout: 'border',
 
-    tbar: [
+    bind: {
+        title: "{title}"
+    },
+
+    defaultFocus: '#txtName',
+
+    dockedItems: [
         {
-            xtype: 'combobox',
-            reference: 'cboUrl',
-            itemId: 'cboUrl',
-            fieldLabel: '  Service URL',
-            displayField: 'value',
-            valueField: 'value',
-            bind: {
-                value: '{url}',
-                store: '{urls}'
-            },
-            minWidth: 500
+            xtype: 'toolbar',
+            dock: 'top',
+            items: [
+                {
+                    iconCls: 'fa fa-save',
+                    text: 'Save',
+                    tooltip: 'Save (Ctrl+S)',
+                    handler: 'onCommandSave'
+                },
+                '-',
+                {
+                    iconCls: 'fa fa-code',
+                    text: ' Format',
+                    tooltip: 'Format selected JSON',
+                    handler: 'onCommandBeautify'
+                },
+                '-',
+                {
+                    iconCls: 'fa fa-chevron-right',
+                    text: 'Evaluate',
+                    tooltip: 'Evaluate expression (Ctrl+E)',
+                    handler: 'onCommandEvaluate'
+                }
+            ]
         },
         {
-            text: 'Go',
-            handler: 'onCommandGo'
-        },
-        '->',
-        {
-            iconCls: 'fa fa-user',
-            text: 'Register',
-            handler: 'onCommandRegister',
-            bind: {
-                hidden: '{user.isAuthenticated}'
-            }
-        },
-        {
-            iconCls: 'fa fa-user',
-            text: 'Login',
-            handler: 'onCommandLogin',
-            bind: {
-                hidden: '{user.isAuthenticated}'
-            }
-        },
-        {
-            iconCls: 'fa fa-cogs',
-            text: 'Settings',
-            handler: 'onCommandSettings',
-            bind: {
-                text: 'Settings',
-                hidden: '{!user.isAuthenticated}'
-            }
-        },
-        {
-            iconCls: 'fa fa-arrow-right',
-            text: 'Logout',
-            handler: 'onCommandLogout',
-            bind: {
-                text: 'Logout ({user.email})',
-                hidden: '{!user.isAuthenticated}'
-            }
+            xtype: 'toolbar',
+            dock: 'top',
+            items: [
+                {
+                    xtype: 'label',
+                    text: 'Properties',
+                    style: {
+                        fontWeight: 'bold'
+                    }
+                },
+                {
+                    xtype: 'tbspacer',
+                    width: 30
+                },
+                {
+                    xtype: "textfield",
+                    fieldLabel: "Name",
+                    itemId: "txtName",
+                    labelWidth: 35,
+                    allowBlank: false,
+                    bind: {
+                        value: "{file.name}"
+                    }
+                },
+                {
+                    xtype: 'tbspacer',
+                    width: 10
+                },
+                /*
+                {
+                    xtype: 'combobox',
+                    reference: 'cboUrl',
+                    itemId: 'cboUrl',
+                    fieldLabel: '  Service URL',
+                    labelWidth: 70,
+                    displayField: 'value',
+                    valueField: 'value',
+                    bind: {
+                        value: '{url}',
+                        store: '{urls}'
+                    },
+                    minWidth: 500
+                },
+                {
+                    text: 'Go',
+                    handler: 'onCommandGo'
+                }
+                */
+            ]
         }
     ],
+
 
     items: [
         // Left panel
@@ -85,29 +117,14 @@ Ext.define('FHIRata.view.PlaygroundView',{
                     region: 'center',
                     title: 'JSON',
                     layout: 'border',
-                    tbar: [
-                        {
-                            iconCls: 'fa fa-cloud-download',
-                            text: 'Load...',
-                            handler: 'onCommandLoad'
-                        },
-                        {
-                            iconCls: 'fa fa-cloud-upload',
-                            text: 'Save...',
-                            handler: 'onCommandSave'
-                        },
-                        '-',
-                        {
-                            iconCls: 'fa fa-code',
-                            text: ' Format',
-                            handler: 'onCommandBeautify'
-                        }
-                    ],
                     items: [
                         {
                             xtype: 'codeeditor',
                             region: 'center',
-                            reference: 'txtJson'
+                            reference: 'txtJson',
+                            bind: {
+                                value: "{file.json}"
+                            }
                         }
                     ]
                 }
@@ -125,19 +142,15 @@ Ext.define('FHIRata.view.PlaygroundView',{
                     layout: 'border',
                     height: '25%',
                     title: 'FHIRata expression',
-                    tbar: [
-                        {
-                            iconCls: 'fa fa-chevron-right',
-                            text: 'Evaluate',
-                            handler: 'onCommandEvaluate'
-                        }
-                    ],
                     items: [
                         {
                             xtype: 'codeeditor',
                             region: 'center',
                             border: 0,
-                            reference: 'txtExpression'
+                            reference: 'txtExpression',
+                            bind: {
+                                value: "{file.expression}"
+                            }
                         }
                     ]
                 },
@@ -151,11 +164,24 @@ Ext.define('FHIRata.view.PlaygroundView',{
                             xtype: 'codeeditor',
                             region: 'center',
                             border: 0,
-                            reference: 'txtResult'
+                            reference: 'txtResult',
+                            bind: {
+                                value: "{file.result}"
+                            }
                         }
                     ]
                 }
             ]
         }
-    ]
+    ],
+
+    createFile: function () {
+        const file = Ext.create('FHIRata.model.Mapping', {
+            id: undefined,
+            name: undefined,
+            json: '{ "hello" : "world" }',
+            expression: "$string()"
+        });
+        this.getViewModel().set("file", file);
+    }
 });

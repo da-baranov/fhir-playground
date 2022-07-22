@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FhirEvaluator.AspNetCore.Models;
+namespace Fhirata.AspNetCore.Models;
 
 public class RegisterModel
 {

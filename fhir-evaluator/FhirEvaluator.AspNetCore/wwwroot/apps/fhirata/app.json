@@ -334,7 +334,6 @@
      */
     "bootstrap": {
         "base": "${app.dir}",
-
         "microloader": "bootstrap.js",
         "css": "bootstrap.css"
     },

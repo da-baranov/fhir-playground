@@ -2,20 +2,40 @@ Ext.define('FHIRata.view.PlaygroundViewController', {
     extend: 'Ext.app.ViewController',
 
     requires: [
-        'FHIRata.view.SettingsDialog',
-        'FHIRata.view.LoginDialog',
-        'FHIRata.Ajax'
+        'FHIRata.Ajax',
+        'FHIRata.Util'
     ],
 
     alias: 'controller.playgroundview',
+
+    _forceClose: false,
+
+    control: {
+        "#": {
+            beforeclose: function () {
+                return this.handleClosing();
+            }
+        }
+    },
 
     onCommandBeautify: function () {
         const editor = this.lookup("txtJson");
         if (editor) editor.beautify();
     },
 
-    onCommandEvaluate: function () {
-        alert("Evaluate");
+    onCommandEvaluate: async function () {
+        const viewModel = this.getViewModel();
+        const model = viewModel.get("file");
+        const data = model.data;
+
+        try {
+            const response = await FHIRata.Ajax.post("/api/fhirata/evaluate", data);
+            const result = response.result;
+            model.set("result", result);
+        }
+        catch (e) {
+            FHIRata.Util.errorMessageBox(e, "Failed to evaluate the expression. ");
+        }
     },
 
     onCommandGo: function () {
@@ -26,102 +46,25 @@ Ext.define('FHIRata.view.PlaygroundViewController', {
         this.doConnect(url);
     },
 
-    onCommandLogout: async function () {
-        const me = this;
-        const viewModel = me.getViewModel();
+    onCommandSave: async function () {
+        const view = this.getView();
+        const viewModel = this.getViewModel();
 
-        Ext.Msg.show({
-            title: 'Question',
-            message: 'Do you really want to exit?',
-            buttons: Ext.Msg.YESNO,
-            icon: Ext.Msg.QUESTION,
-            fn: async function(btn) {
-                if (btn === 'yes') {
-                    try {
-                        FHIRata.Ajax.setToken(undefined);
-
-                        const response = await FHIRata.Ajax.post("/api/auth/logout");
-                        if (!response.success) {
-                            alert("Logout failed: " + response.message);
-                        } else {
-                            FHIRata.Ajax.setToken(undefined);
-                        }
-                    }
-                    catch (e) {
-                        alert(e + " " + e.message);
-                    }
-                    finally {
-                        viewModel.loadSession();
-                    }
-                }
-            }
-        });
-    },
-
-    onCommandLogin: function () {
-        const me = this;
-        const viewModel = me.getViewModel();
-
-        const dialog = new FHIRata.view.LoginDialog();
-        dialog.setTitle("FHIRata login");
-        dialog.down("#cmdOK").setText("Login");
-        dialog.show();
-        dialog.on("ok", async function (sender, data) {
-            try {
-                const response = await FHIRata.Ajax.post("/api/auth/login", data);
-                if (!response.success) {
-                    alert("Login failed: " + response.message);
-                } else {
-                    FHIRata.Ajax.setToken(response.token);
-                    sender.close();
-                }
-            }
-            catch (e) {
-                alert(e + " " + e.message);
-            }
-            finally {
-                viewModel.loadSession();
-            }
-        });
-    },
-
-    onCommandRegister: function () {
-        const me = this;
-        const viewModel = me.getViewModel();
-
-        const dialog = new FHIRata.view.LoginDialog();
-        dialog.setTitle("FHIRata registration");
-        dialog.down("#cmdOK").setText("Register");
-        dialog.on("ok", async function (sender, data) {
-            try {
-                const response = await FHIRata.Ajax.post("/api/auth/register", data);
-
-                if (!response.success) {
-                    alert("Registration failed: " + response.message);
-                } else {
-                    FHIRata.Ajax.setToken(response.token);
-                    sender.close();
-                }
-            }
-            catch (e) {
-                alert(e + " " + e.message);
-            }
-            finally {
-                viewModel.loadSession();
-            }
-        });
-        dialog.show();
-    },
-
-    onCommandSettings: function () {
-        const dialog = new FHIRata.view.SettingsDialog();
-        dialog.on("ok", function (sender) {
-            sender.close();
-        });
-        dialog.on("cancel", function (sender) {
-            sender.close();
-        });
-        dialog.show();
+        view.mask("Saving data...");
+        try {
+            const model = viewModel.get("file");
+            const response = await FHIRata.Ajax.post("/api/fhirata/mapping", model.data);
+            const id = response.id;
+            viewModel.set("file.id", id);
+            view.unmask();
+            view.fireEvent("saved");
+            FHIRata.Util.toast('Saved');
+            model.dirty = false;
+        }
+        catch (e) {
+            view.unmask();
+            FHIRata.Util.errorMessageBox(e, "Save failed.");
+        }
     },
 
     doConnect: function (url) {
@@ -133,5 +76,49 @@ Ext.define('FHIRata.view.PlaygroundViewController', {
             store.add({ value: url });
         }
         this.getViewModel().set("url", url);
+    },
+
+    handleClosing: function () {
+        const me = this;
+        const view = this.getView();
+        const viewModel = this.getViewModel();
+        const model = viewModel.get("file");
+
+        if (view.closeMe) {
+            view.closeMe = false;
+            return true;
+        }
+
+        if (me._forceClose) {
+            view.closeMe = true;
+            view.close();
+        }
+        else {
+            if (model.dirty) {
+                Ext.Msg.show({
+                    title: "Question",
+                    message: "You are closing a tab that has unsaved changes. Do you want to save changes?",
+                    buttons: Ext.Msg.YESNOCANCEL,
+                    icon: Ext.Msg.QUESTION,
+                    fn: function (btn) {
+                        if (btn === 'yes') {
+                            me.onCommandSave().then(function () {
+                                view.closeMe = true;
+                                view.close();
+                            });
+                        } else if (btn === 'no') {
+                            view.closeMe = true;
+                            view.close();
+                        } else {
+                            view.closeMe = false;
+                        }
+                    }
+                });
+            } else {
+                view.closeMe = true;
+                view.close();
+            }
+        }
+        return false;
     }
 });

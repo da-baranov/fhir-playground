@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/ace": "^0.0.48",
     "ace-code-editor": "^1.2.3"
   }
 }

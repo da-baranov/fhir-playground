@@ -3,7 +3,7 @@ Ext.define('FHIRata.view.LoginDialog',{
     extend: 'Ext.window.Window',
     modal: true,
     width: 400,
-    height: 170,
+    height: 200,
     title: 'FHIRata Logon',
 
     requires: [
@@ -51,6 +51,10 @@ Ext.define('FHIRata.view.LoginDialog',{
                     name: "password",
                     bind: "{password}",
                     allowBlank: false
+                },
+                {
+                    xtype: "label",
+                    html: "Warning! This a demo web application. Don't enter logins and passwords which you use elsewere"
                 }
             ]
         }

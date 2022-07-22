@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using FhirEvaluator.AspNetCore.Data;
+using Fhirata.AspNetCore.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
+using Fhirata.AspNetCore.Controllers.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("IdentityContextConnection") ?? throw new InvalidOperationException("Connection string 'IdentityContextConnection' not found.");
@@ -12,7 +15,7 @@ var connectionString = builder.Configuration.GetConnectionString("IdentityContex
 builder.Services.AddDbContext<IdentityContext>(options => options.UseSqlite(connectionString));
 
 builder.Services
-    .AddIdentity<FhirEvaluator.AspNetCore.Data.IdentityUser, FhirEvaluator.AspNetCore.Data.IdentityRole>(options =>
+    .AddIdentity<Fhirata.AspNetCore.Data.IdentityUser, Fhirata.AspNetCore.Data.IdentityRole>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
         options.SignIn.RequireConfirmedPhoneNumber = false;
@@ -26,8 +29,13 @@ builder.Services
     })
     .AddEntityFrameworkStores<IdentityContext>()
     .AddDefaultTokenProviders();
-// builder.Services.AddIdentity<FhirEvaluator.AspNetCore.Data.IdentityUser, FhirEvaluator.AspNetCore.Data.IdentityRole>();
+// builder.Services.AddIdentity<Fhirata.AspNetCore.Data.IdentityUser, Fhirata.AspNetCore.Data.IdentityRole>();
 // builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+# region validation
+builder.Services.AddScoped<ValidationFilterAttribute>();
+builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true);
+# endregion
 
 builder.Services.AddAuthentication(options =>
 {
@@ -54,7 +62,19 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "FHIRata API",
+        Description = "An ASP.NET Core Web API for managing FHIRata expressions"
+    });
+
+    // using System.Reflection;
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+});
 
 var app = builder.Build();
 

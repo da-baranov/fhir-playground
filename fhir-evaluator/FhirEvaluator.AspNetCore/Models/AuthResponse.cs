@@ -1,11 +1,7 @@
-﻿namespace FhirEvaluator.AspNetCore.Models
+﻿namespace Fhirata.AspNetCore.Models
 {
-    public class AuthResponse
+    public class AuthResponse : ApiResponse
     {
-        public bool Success { get; set; }
-        
-        public string? Message { get; set; }
-        
         public string? Token { get; set; }
 
         public DateTime? Expiration { get; set; }

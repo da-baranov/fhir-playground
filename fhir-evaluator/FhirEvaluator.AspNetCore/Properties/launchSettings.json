@@ -3,12 +3,12 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:15401",
+      "applicationUrl": "http://localhost:15401/Fhirata",
       "sslPort": 44322
     }
   },
   "profiles": {
-    "FhirEvaluator.AspNetCore": {
+    "Fhirata.AspNetCore": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {

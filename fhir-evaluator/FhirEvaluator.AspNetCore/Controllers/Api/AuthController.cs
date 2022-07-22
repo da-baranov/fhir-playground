@@ -1,4 +1,4 @@
-﻿using FhirEvaluator.AspNetCore.Models;
+﻿using Fhirata.AspNetCore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace FhirEvaluator.AspNetCore.Controllers.Api
+namespace Fhirata.AspNetCore.Controllers.Api
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -16,23 +16,23 @@ namespace FhirEvaluator.AspNetCore.Controllers.Api
     {
         private readonly IConfiguration _configuration;
 
-        private readonly RoleManager<FhirEvaluator.AspNetCore.Data.IdentityRole> _roleManager;
+        private readonly RoleManager<Fhirata.AspNetCore.Data.IdentityRole> _roleManager;
 
-        private readonly UserManager<FhirEvaluator.AspNetCore.Data.IdentityUser> _userManager;
+        private readonly UserManager<Fhirata.AspNetCore.Data.IdentityUser> _userManager;
 
         public AuthController(
-            UserManager<FhirEvaluator.AspNetCore.Data.IdentityUser> userManager,
-            RoleManager<FhirEvaluator.AspNetCore.Data.IdentityRole> roleManager,
+            UserManager<Fhirata.AspNetCore.Data.IdentityUser> userManager,
+            RoleManager<Fhirata.AspNetCore.Data.IdentityRole> roleManager,
             IConfiguration configuration)
         {
-            this._userManager = userManager;
-            this._roleManager = roleManager;
-            this._configuration = configuration;
+            this._userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            this._roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
+            this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         [Route("session")]
         [HttpGet]
-        public SessionInfo GetUserSessionInfo()
+        public ActionResult<SessionInfo> GetUserSessionInfo()
         {
             var result = new SessionInfo();
             if (User.Identity != null && User.Identity.IsAuthenticated)
@@ -43,9 +43,14 @@ namespace FhirEvaluator.AspNetCore.Controllers.Api
             return result;
         }
 
+        /// <summary>
+        /// Authenticates a user
+        /// </summary>
+        /// <param name="model">User id and password</param>
+        /// <returns></returns>
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginModel model)
         {
             var user = await _userManager.FindByNameAsync(model.Email);
 
@@ -69,32 +74,33 @@ namespace FhirEvaluator.AspNetCore.Controllers.Api
 
                 HttpContext.Response.Cookies.Append("jwt", tokenString, new CookieOptions() { HttpOnly = true });
 
-                return Ok(new AuthResponse
+                return new AuthResponse
                 {
                     Token = tokenString,
                     Expiration = token.ValidTo,
                     Success = true,
                     Message = "Login successful"
-                });
+                };
             }
-            return Unauthorized();
+            return StatusCode(401, new AuthResponse { Success = false, Message = "Logon failed." });
         }
 
         [HttpPost]
         [Route("logout")]
-        public async Task<IActionResult> Logout()
+        public ActionResult<AuthResponse> Logout()
         {
-            return Ok(new AuthResponse { Success = true, Message = "Logout successfull" });
+            return new AuthResponse { Success = true, Message = "Logout successfull" };
         }
+
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterModel model)
         {
             var userExists = await _userManager.FindByNameAsync(model.Email);
             if (userExists != null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new AuthResponse { Success = false, Message = "User already exists!" });
 
-            FhirEvaluator.AspNetCore.Data.IdentityUser user = new()
+            Fhirata.AspNetCore.Data.IdentityUser user = new()
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
@@ -125,14 +131,15 @@ namespace FhirEvaluator.AspNetCore.Controllers.Api
 
             HttpContext.Response.Cookies.Append("jwt", tokenString, new CookieOptions() { HttpOnly = true });
 
-            return Ok(new AuthResponse
+            return new AuthResponse
             {
                 Success = true,
                 Message = "User created successfully!",
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 Expiration = token.ValidTo
-            });
+            };
         }
+
         private JwtSecurityToken GetToken(List<Claim> authClaims)
         {
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));

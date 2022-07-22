@@ -5,11 +5,15 @@ Ext.define('FHIRata.view.PlaygroundViewModel', {
     extend: 'Ext.app.ViewModel',
     alias: 'viewmodel.playgroundview',
     data: {
-        name: 'FHIRata',
         url: '/api/fhirata',
-        user: {
-            isAuthenticated: false,
-            email: undefined
+
+        file: {}
+    },
+
+    formulas: {
+        title: function (get) {
+            const fileName = get('file.name');
+            return fileName && fileName.length ? fileName : 'New document*';
         }
     },
 
@@ -20,23 +24,5 @@ Ext.define('FHIRata.view.PlaygroundViewModel', {
                 { value: '/api/fhirata' }
             ]
         }
-    },
-
-    constructor: function (config) {
-        this.callParent(arguments);
-        this.loadSession();
-    },
-
-    loadSession: function () {
-        const me = this;
-        FHIRata
-            .Util
-            .getSessionInfo()
-            .then(function (data) {
-                me.set("user", data);
-            })
-            .catch(function (e) {
-                alert(e);
-            });
     }
 });

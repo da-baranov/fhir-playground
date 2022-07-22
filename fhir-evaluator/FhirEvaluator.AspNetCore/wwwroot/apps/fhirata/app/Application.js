@@ -8,7 +8,8 @@ Ext.define('FHIRata.Application', {
 
     name: 'FHIRata',
 
-    quickTips: false,
+    quickTips: true,
+
     platformConfig: {
         desktop: {
             quickTips: true

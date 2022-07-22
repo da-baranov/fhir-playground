@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Favorites xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <folders>
+    <Folder>
+      <name>Api</name>
+      <folders />
+      <favorites>
+        <Favorite>
+          <name>FhirataController.cs</name>
+          <path>FhirEvaluator.AspNetCore\Controllers\Api\FhirataController.cs</path>
+          <absolutePath>C:\dev\git\da-baranov\fhir-playground\fhir-evaluator\FhirEvaluator.AspNetCore\Controllers\Api\FhirataController.cs</absolutePath>
+          <position>
+            <line>1</line>
+            <column>1</column>
+            <lineHash>aMau4/qc4Ykc50nKH7nGcjM1xzHSFeWriTDGUWvJmZk=</lineHash>
+          </position>
+        </Favorite>
+        <Favorite>
+          <name>AuthController.cs</name>
+          <path>FhirEvaluator.AspNetCore\Controllers\Api\AuthController.cs</path>
+          <absolutePath>C:\dev\git\da-baranov\fhir-playground\fhir-evaluator\FhirEvaluator.AspNetCore\Controllers\Api\AuthController.cs</absolutePath>
+        </Favorite>
+      </favorites>
+    </Folder>
+  </folders>
+  <favorites />
+</Favorites>
