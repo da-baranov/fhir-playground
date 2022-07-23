@@ -1,15 +1,28 @@
+using Fhirata.AspNetCore.Controllers.Api;
+using Fhirata.AspNetCore.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Fhirata.AspNetCore.Data;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi.Models;
+using NLog;
+using NLog.Web;
 using System.Reflection;
-using Fhirata.AspNetCore.Controllers.Api;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+#region logging
+
+    // https://github.com/NLog/NLog/wiki/Getting-started-with-ASP.NET-Core-6
+    var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+    logger.Debug("Init main");
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
+
+#endregion logging
+
 var connectionString = builder.Configuration.GetConnectionString("IdentityContextConnection") ?? throw new InvalidOperationException("Connection string 'IdentityContextConnection' not found.");
 
 builder.Services.AddDbContext<IdentityContext>(options => options.UseSqlite(connectionString));
@@ -33,8 +46,10 @@ builder.Services
 // builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 # region validation
-builder.Services.AddScoped<ValidationFilterAttribute>();
-builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true);
+
+    builder.Services.AddScoped<ValidationFilterAttribute>();
+    builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true);
+
 # endregion
 
 builder.Services.AddAuthentication(options =>
@@ -75,6 +90,8 @@ builder.Services.AddSwaggerGen(options =>
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 });
+
+
 
 var app = builder.Build();
 

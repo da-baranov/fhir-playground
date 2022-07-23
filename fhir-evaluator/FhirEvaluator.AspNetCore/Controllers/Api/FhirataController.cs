@@ -1,5 +1,6 @@
 ﻿using Fhirata.AspNetCore.Data;
 using Fhirata.AspNetCore.Models;
+using Jsonata.Net.Native;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +13,14 @@ namespace Fhirata.AspNetCore.Controllers.Api
     [Authorize]
     public class FhirataController : ControllerBase
     {
-        private IdentityContext dbContext;
+        private IdentityContext _dbContext;
 
-        public FhirataController(IdentityContext dbContext)
+        private ILogger<FhirataController> _logger;
+
+        public FhirataController(IdentityContext dbContext, ILogger<FhirataController> logger)
         {
-            this.dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            this._dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [HttpDelete]
@@ -27,13 +31,13 @@ namespace Fhirata.AspNetCore.Controllers.Api
         {
             try
             {
-                var user = await dbContext.Users.FirstOrDefaultAsync(row => row.UserName == User.Identity.Name);
+                var user = await _dbContext.Users.FirstOrDefaultAsync(row => row.UserName == User.Identity.Name);
                 if (user == null)
                 {
                     return StatusCode(401, new SaveMappingResponse { Success = false, Message = "Unauthorized (user not found)" });
                 }
 
-                var row = await dbContext
+                var row = await _dbContext
                     .Mappings
                     .Include(row => row.User)
                     .FirstOrDefaultAsync(row => row.Id == id);
@@ -46,8 +50,8 @@ namespace Fhirata.AspNetCore.Controllers.Api
                 {
                     return StatusCode(401, new SaveMappingResponse { Success = false, Message = "You have no permissions to delete this record" });
                 }
-                dbContext.Remove(row);
-                await dbContext.SaveChangesAsync();
+                _dbContext.Remove(row);
+                await _dbContext.SaveChangesAsync();
                 
                 return this.ApiSuccess();
             }
@@ -77,7 +81,16 @@ namespace Fhirata.AspNetCore.Controllers.Api
             var result = new TransformResponse();
             result.Json = result.Json;
             result.Expression = result.Expression;
-            result.Result = "Some text as a result of a successful data transformation algorithm on server";
+            try
+            {
+                var query = new JsonataQuery(request.Expression);
+                result.Result = query.Eval(request.Json);
+            }
+            catch (Exception e)
+            {
+                result.Result = e.Message;
+            }
+            
             return result;
         }
 
@@ -95,9 +108,9 @@ namespace Fhirata.AspNetCore.Controllers.Api
                 request = request ?? new StoreRequest();
 
                 // Total number of records
-                response.Total = dbContext.Mappings.Count();
+                response.Total = _dbContext.Mappings.Count();
 
-                var q = dbContext
+                var q = _dbContext
                     .Mappings
                     .Include(row => row.User)
                     .AsQueryable();
@@ -140,7 +153,7 @@ namespace Fhirata.AspNetCore.Controllers.Api
 
             try
             {
-                var user = await dbContext.Users.FirstOrDefaultAsync(row => row.UserName == User.Identity.Name);
+                var user = await _dbContext.Users.FirstOrDefaultAsync(row => row.UserName == User.Identity.Name);
                 if (user == null)
                 {
                     return StatusCode(401, new SaveMappingResponse { Success = false, Message = "Unauthorized (user not found)" });
@@ -153,11 +166,11 @@ namespace Fhirata.AspNetCore.Controllers.Api
                     row = new UserMappingOption();
                     row.CreateDate = DateTime.Now;
                     row.UserId = user.Id;
-                    dbContext.Mappings.Add(row);
+                    _dbContext.Mappings.Add(row);
                 }
                 else
                 {
-                    row = await dbContext.Mappings.FirstOrDefaultAsync(row => row.Id == request.Id);
+                    row = await _dbContext.Mappings.FirstOrDefaultAsync(row => row.Id == request.Id);
                     if (row == null)
                     {
                         return StatusCode(404, new SaveMappingResponse { Success = false, Message = "Record not found" });
@@ -173,7 +186,7 @@ namespace Fhirata.AspNetCore.Controllers.Api
                 row.CodeMappings = request.CodeMappings;
                 row.Server = request.Server;
 
-                await dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
 
                 var result = new SaveMappingResponse { Success = true, Message = "Saved ", Id = row.Id };
                 return result;

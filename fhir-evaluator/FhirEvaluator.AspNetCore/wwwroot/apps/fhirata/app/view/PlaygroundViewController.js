@@ -24,16 +24,20 @@ Ext.define('FHIRata.view.PlaygroundViewController', {
     },
 
     onCommandEvaluate: async function () {
+        const pnl = this.lookup("pnlResult");
+
         const viewModel = this.getViewModel();
         const model = viewModel.get("file");
         const data = model.data;
-
+        pnl.mask("Working...");
         try {
             const response = await FHIRata.Ajax.post("/api/fhirata/evaluate", data);
             const result = response.result;
             model.set("result", result);
+            pnl.unmask();
         }
         catch (e) {
+            pnl.unmask();
             model.set("result", e.message);
         }
     },

@@ -188,6 +188,7 @@ Ext.define('FHIRata.view.PlaygroundView', {
                                 // RESULTS VIEW
                                 {
                                     xtype: 'panel',
+                                    reference: 'pnlResult',
                                     region: 'center',
                                     layout: 'border',
                                     title: 'Result',
@@ -244,7 +245,7 @@ Ext.define('FHIRata.view.PlaygroundView', {
             id: undefined,
             name: undefined,
             json: '{ "hello" : "world" }',
-            expression: "$string()"
+            expression: "$[0]"
         });
         this.getViewModel().set("file", file);
     }

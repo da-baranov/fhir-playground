@@ -38,6 +38,10 @@ Ext.application({
                 console.log(event);
             }
         });
+
         console.log("Started");
+
+        var el = document.getElementById("loading-overlay");
+        if (el) el.remove();
     }
 });

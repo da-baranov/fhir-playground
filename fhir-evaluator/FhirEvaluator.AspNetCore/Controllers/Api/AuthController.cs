@@ -20,14 +20,18 @@ namespace Fhirata.AspNetCore.Controllers.Api
 
         private readonly UserManager<Fhirata.AspNetCore.Data.IdentityUser> _userManager;
 
+        private readonly ILogger<AuthController> _logger;
+
         public AuthController(
             UserManager<Fhirata.AspNetCore.Data.IdentityUser> userManager,
             RoleManager<Fhirata.AspNetCore.Data.IdentityRole> roleManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<AuthController> logger)
         {
             this._userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
             this._roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [Route("session")]
@@ -50,6 +54,7 @@ namespace Fhirata.AspNetCore.Controllers.Api
         /// <returns></returns>
         [HttpPost]
         [Route("login")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginModel model)
         {
             var user = await _userManager.FindByNameAsync(model.Email);
@@ -94,6 +99,7 @@ namespace Fhirata.AspNetCore.Controllers.Api
 
         [HttpPost]
         [Route("register")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterModel model)
         {
             var userExists = await _userManager.FindByNameAsync(model.Email);

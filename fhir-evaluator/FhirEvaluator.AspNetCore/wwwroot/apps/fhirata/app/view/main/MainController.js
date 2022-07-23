@@ -100,7 +100,7 @@ Ext.define('FHIRata.view.main.MainController', {
                 }
             }
             catch (e) {
-                alert(e + " " + e.message);
+                FHIRata.Util.errorMessageBox(e);
             }
             finally {
             }

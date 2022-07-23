@@ -21,9 +21,9 @@ Ext.define('FHIRata.view.main.Main', {
         {
             xtype: 'image',
             height: 37,
-            width: 119,
+            width: 116,
             // src: 'https://fhir.org/assets/images/HL7_FHIR-stacked_1_0_0.png'
-            src: 'https://outburn.co.il/wp-content/uploads/2022/01/logo_outburn.png'
+            src: window.EXT_BASE_PATH + "images/logo_outburn.png"
         },
         {
             xtype: 'tbspacer',
