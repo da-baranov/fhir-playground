@@ -23,6 +23,7 @@ Ext.define('FHIRata.view.PlaygroundView', {
     defaultFocus: '#txtName',
 
     dockedItems: [
+        // Toolbar 1
         {
             xtype: 'toolbar',
             dock: 'top',
@@ -35,6 +36,26 @@ Ext.define('FHIRata.view.PlaygroundView', {
                 },
                 '-',
                 {
+                    iconCls: 'fa-regular fa-file-code',
+                    text: 'Insert JSON template',
+                    tooltip: 'Inserts JSON template',
+                    menu: [
+                        {
+                            text: 'Example 1',
+                            handler: 'onCommandInsertTemplate'
+                        },
+                        {
+                            text: 'Example 2',
+                            handler: 'onCommandInsertTemplate',
+                        },
+                        {
+                            text: 'Example 3',
+                            handler: 'onCommandInsertTemplate'
+                        }
+                    ]
+                },
+                '-',
+                {
                     iconCls: 'fa fa-code',
                     text: ' Format',
                     tooltip: 'Format selected JSON',
@@ -42,13 +63,14 @@ Ext.define('FHIRata.view.PlaygroundView', {
                 },
                 '-',
                 {
-                    iconCls: 'fa fa-chevron-right',
+                    iconCls: 'fa fa-chevron-right pg-green',
                     text: 'Evaluate',
                     tooltip: 'Evaluate expression (Ctrl+E)',
                     handler: 'onCommandEvaluate'
                 }
             ]
         },
+        // Toolbar 2
         {
             xtype: 'toolbar',
             dock: 'top',
@@ -78,96 +100,138 @@ Ext.define('FHIRata.view.PlaygroundView', {
                     xtype: 'tbspacer',
                     width: 10
                 },
-                /*
                 {
                     xtype: 'combobox',
                     reference: 'cboUrl',
                     itemId: 'cboUrl',
-                    fieldLabel: '  Service URL',
+                    fieldLabel: ' FHIR Server',
                     labelWidth: 70,
                     displayField: 'value',
                     valueField: 'value',
                     bind: {
-                        value: '{url}',
+                        value: '{file.server}',
                         store: '{urls}'
                     },
                     minWidth: 500
-                },
-                {
-                    text: 'Go',
-                    handler: 'onCommandGo'
                 }
-                */
             ]
         }
     ],
 
 
     items: [
-        // Left panel
         {
-            xtype: 'container',
-            region: 'west',
-            layout: 'border',
-            width: '50%',
-            split: true,
-            items: [
-                {
-                    xtype: 'panel',
-                    region: 'center',
-                    title: 'JSON',
-                    layout: 'border',
-                    items: [
-                        {
-                            xtype: 'codeeditor',
-                            region: 'center',
-                            reference: 'txtJson',
-                            bind: {
-                                value: "{file.json}"
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        // Right panel
-        {
-            xtype: 'container',
+            xtype: 'tabpanel',
             region: 'center',
-            layout: 'border',
+            tabPosition: 'left',
             items: [
+
+                // EXPRESSION EDITOR TAB
                 {
-                    xtype: 'panel',
-                    region: 'north',
+                    title: 'Expression editor',
                     layout: 'border',
-                    height: '25%',
-                    title: 'FHIRata expression',
                     items: [
+                        // Left panel - JSON EDITOR
                         {
-                            xtype: 'codeeditor',
+                            xtype: 'container',
+                            region: 'west',
+                            layout: 'border',
+                            width: '50%',
+                            split: true,
+                            items: [
+                                {
+                                    xtype: 'panel',
+                                    region: 'center',
+                                    title: 'JSON',
+                                    layout: 'border',
+                                    items: [
+                                        {
+                                            xtype: 'codeeditor',
+                                            region: 'center',
+                                            reference: 'txtJson',
+                                            bind: {
+                                                value: "{file.json}"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        // Right panel - CONTAINER FOR
+                        {
+                            xtype: 'container',
                             region: 'center',
-                            border: 0,
-                            reference: 'txtExpression',
-                            bind: {
-                                value: "{file.expression}"
-                            }
+                            layout: 'border',
+                            items: [
+                                // EXPRESSION EDITOR
+                                {
+                                    xtype: 'panel',
+                                    region: 'north',
+                                    layout: 'border',
+                                    height: '25%',
+                                    title: 'FHIRata expression',
+                                    split: 'true',
+                                    items: [
+                                        {
+                                            xtype: 'codeeditor',
+                                            region: 'center',
+                                            border: 0,
+                                            reference: 'txtExpression',
+                                            mode: "xquery",
+                                            bind: {
+                                                value: "{file.expression}"
+                                            }
+                                        }
+                                    ]
+                                },
+
+                                // RESULTS VIEW
+                                {
+                                    xtype: 'panel',
+                                    region: 'center',
+                                    layout: 'border',
+                                    title: 'Result',
+                                    split: 'true',
+                                    items: [
+                                        {
+                                            xtype: 'codeeditor',
+                                            region: 'center',
+                                            border: 0,
+                                            reference: 'txtResult',
+                                            mode: "text",
+                                            bind: {
+                                                value: "{file.result}"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 },
+
+                // CODE MAPPINGS TAB
                 {
-                    xtype: 'panel',
-                    region: 'center',
+                    title: 'Code mappings',
                     layout: 'border',
-                    title: 'Result',
                     items: [
                         {
-                            xtype: 'codeeditor',
+                            xtype: 'panel',
                             region: 'center',
-                            border: 0,
-                            reference: 'txtResult',
-                            bind: {
-                                value: "{file.result}"
-                            }
+                            title: 'Custom code mappings (plain text, XML, JSON)',
+                            layout: 'border',
+                            items: [
+                                {
+                                    xtype: 'codeeditor',
+                                    region: 'center',
+                                    border: 0,
+                                    reference: 'txtCodeMappings',
+                                    mode: "text",
+                                    bind: {
+                                        value: "{file.codeMappings}"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 }

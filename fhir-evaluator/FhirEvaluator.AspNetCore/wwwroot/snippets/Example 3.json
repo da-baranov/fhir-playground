@@ -1,0 +1,20 @@
+{
+  "reportNumber": "2022-01/1",
+  "reportDate": "2022-01-01T00:00:00",
+  "laboratory": "Laboratory #1",
+  "title": "Blood examination",
+  "results": [
+    {
+      "code": "00000-1",
+      "displayName": "Haemoglobin",
+      "value": 120,
+      "price": 32
+    },
+    {
+      "code": "00000-2",
+      "displayName": "Erythrocytes",
+      "value": 4.7,
+      "price": 40
+    }
+  ]
+}

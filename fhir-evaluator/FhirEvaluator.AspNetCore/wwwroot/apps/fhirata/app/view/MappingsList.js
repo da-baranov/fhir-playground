@@ -46,7 +46,7 @@ Ext.define('FHIRata.view.MappingsList',{
                         {
                             text: 'Create',
                             tooltip: 'Creates an expression editor',
-                            iconCls: 'fa fa-plus',
+                            iconCls: 'fa fa-plus pg-orange',
                             handler: 'onCommandCreate'
                         },
                         {
@@ -79,6 +79,16 @@ Ext.define('FHIRata.view.MappingsList',{
                             dataIndex: 'name'
                         },
                         {
+                            text: 'Expression',
+                            flex: 2,
+                            dataIndex: 'expression'
+                        },
+                        {
+                            text: 'FHIR server',
+                            flex: 2,
+                            dataIndex: 'server'
+                        },
+                        {
                             text: 'Author',
                             flex: 1,
                             dataIndex: 'userName'
@@ -95,11 +105,27 @@ Ext.define('FHIRata.view.MappingsList',{
                     bbar: {
                         xtype: 'pagingtoolbar',
                         displayInfo: true
+                    },
+                    listeners: {
+                        render: function (sender) {
+
+                        }
                     }
                 }
             ]
         }
     ],
+
+    initComponent: function () {
+        this.callParent(arguments);
+        const controller = this.getController();
+        Ext.on("logon", function () {
+            controller.refreshView();
+        });
+        Ext.on("logoff", function () {
+            controller.refreshView();
+        });
+    },
 
     saveActiveDocument: async function () {
         const activeTab = this.getActiveTab();

@@ -5,8 +5,6 @@ Ext.define('FHIRata.view.PlaygroundViewModel', {
     extend: 'Ext.app.ViewModel',
     alias: 'viewmodel.playgroundview',
     data: {
-        url: '/api/fhirata',
-
         file: {}
     },
 
@@ -21,7 +19,7 @@ Ext.define('FHIRata.view.PlaygroundViewModel', {
         urls: {
             fields: ['value'],
             data: [
-                { value: '/api/fhirata' }
+                { value: 'http://hapi-fhir.outburn.co.il/fhir' }
             ]
         }
     }

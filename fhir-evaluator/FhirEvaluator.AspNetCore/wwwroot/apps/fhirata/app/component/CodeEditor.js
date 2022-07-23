@@ -4,7 +4,8 @@
     border: false,
 
     config: {
-        value: null
+        value: null,
+        mode: "json"
     },
 
     publishes: ["value"],
@@ -20,7 +21,7 @@
             if (value !== editorValue) {
                 this._editor.setValue(value);
                 this._editor.clearSelection();
-                this._editor.moveCursorToPosition({ row: 0, column: 0 });
+                // this._editor.moveCursorToPosition({ row: 0, column: 0 });
             }
         }
     },
@@ -45,6 +46,7 @@
     },
 
     initAce: function () {
+        const mode = this.getMode() || "json";
         var me = this;
         if (!ace) {
             throw new Error(
@@ -55,7 +57,7 @@
         this._editor = ace.edit(this.ace_id);
         this._beautify = ace.require("ace/ext/beautify");
         this._editor.setTheme("ace/theme/chrome");
-        this._editor.session.setMode("ace/mode/json");
+        this._editor.session.setMode("ace/mode/" + mode);
         this._editor.on("change", function (e) {
             var editorValue = me._editor.getValue();
             if (!editorValue) editorValue = "";

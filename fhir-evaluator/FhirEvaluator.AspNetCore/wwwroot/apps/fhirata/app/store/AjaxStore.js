@@ -7,6 +7,8 @@ Ext.define('FHIRata.store.AjaxStore', {
 
     alias: 'store.ajax',
 
+    url: undefined,
+    rootProperty: undefined,
     silent: false,
 
     proxy: {
@@ -26,6 +28,12 @@ Ext.define('FHIRata.store.AjaxStore', {
             } else if (this.url) {
                 proxy.setUrl(this.url);
             }
+
+            if (config.rootProperty) {
+                proxy.getReader().setRootProperty(config.rootProperty);
+            } else if (this.rootProperty) {
+                proxy.getReader().setRootProperty(this.rootProperty);
+            }
         }
 
         this.on("beforeload", function (sender) {
@@ -40,8 +48,10 @@ Ext.define('FHIRata.store.AjaxStore', {
         });
 
         this.on("load", function (sender, records, success, op) {
-            if (!success && !sender.silent) {
-                FHIRata.Util.errorMessageBox(op);
+            if (!success) {
+                if (!sender.silent) {
+                    FHIRata.Util.errorMessageBox(op);
+                }
             }
         });
     }

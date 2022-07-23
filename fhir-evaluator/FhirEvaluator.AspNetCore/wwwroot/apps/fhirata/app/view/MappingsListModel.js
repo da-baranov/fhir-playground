@@ -13,9 +13,13 @@ Ext.define('FHIRata.view.MappingsListModel', {
     stores: {
         dataset: {
             type: 'ajax',
+            rootProperty: 'data',
             url: FHIRata.Ajax.apiUrl('/api/fhirata/mapping'),
             model: 'FHIRata.model.Mapping',
-            autoLoad: true
+            autoLoad: true,
+            listeners: {
+                load: 'onLoad'
+            }
         }
     }
 });

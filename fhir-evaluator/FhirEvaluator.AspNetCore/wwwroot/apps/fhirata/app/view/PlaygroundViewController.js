@@ -34,7 +34,7 @@ Ext.define('FHIRata.view.PlaygroundViewController', {
             model.set("result", result);
         }
         catch (e) {
-            FHIRata.Util.errorMessageBox(e, "Failed to evaluate the expression. ");
+            model.set("result", e.message);
         }
     },
 
@@ -44,6 +44,19 @@ Ext.define('FHIRata.view.PlaygroundViewController', {
             return;
         }
         this.doConnect(url);
+    },
+
+    onCommandInsertTemplate: async function (sender) {
+        try {
+            const model = this.getViewModel().get("file");
+            const url = window.EXT_BASE_PATH + "snippets/" + sender.text + ".json";
+            const response = await window.fetch(url);
+            const text = await response.text();
+            model.set("json", text);
+        }
+        catch (e) {
+            FHIRata.Util.errorMessageBox(e);
+        }
     },
 
     onCommandSave: async function () {

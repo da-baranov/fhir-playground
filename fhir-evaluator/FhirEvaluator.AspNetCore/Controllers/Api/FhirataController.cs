@@ -27,15 +27,28 @@ namespace Fhirata.AspNetCore.Controllers.Api
         {
             try
             {
+                var user = await dbContext.Users.FirstOrDefaultAsync(row => row.UserName == User.Identity.Name);
+                if (user == null)
+                {
+                    return StatusCode(401, new SaveMappingResponse { Success = false, Message = "Unauthorized (user not found)" });
+                }
+
                 var row = await dbContext
                     .Mappings
                     .Include(row => row.User)
-                    .FirstOrDefaultAsync(row => row.Id == id && row.User.UserName == User.Identity.Name);
-                if (row != null)
+                    .FirstOrDefaultAsync(row => row.Id == id);
+                if (row == null)
                 {
-                    dbContext.Remove(row);
-                    await dbContext.SaveChangesAsync();
+                    return StatusCode(404, new SaveMappingResponse { Success = false, Message = "Record not found" });
                 }
+
+                if (row.UserId != user.Id)
+                {
+                    return StatusCode(401, new SaveMappingResponse { Success = false, Message = "You have no permissions to delete this record" });
+                }
+                dbContext.Remove(row);
+                await dbContext.SaveChangesAsync();
+                
                 return this.ApiSuccess();
             }
             catch (Exception ex)
@@ -50,6 +63,8 @@ namespace Fhirata.AspNetCore.Controllers.Api
         [ProducesErrorResponseType(typeof(ApiResponse))]
         public async Task<ActionResult<TransformResponse>> Evaluate([FromBody] TransformRequest request)
         {
+            request = request ?? new TransformRequest();
+
             try
             {
                 JsonSerializer.Deserialize<dynamic>(request.Json);
@@ -58,37 +73,42 @@ namespace Fhirata.AspNetCore.Controllers.Api
             {
                 return this.ApiError(jex, 400);
             }
+
             var result = new TransformResponse();
             result.Json = result.Json;
             result.Expression = result.Expression;
-            result.Result = "Some text as a result of a data transformation algorithm on server";
+            result.Result = "Some text as a result of a successful data transformation algorithm on server";
             return result;
         }
 
         [HttpGet]
         [Route("mapping/{id?}")]
-        [Produces(typeof(List<UserMappingOption>))]
+        [Produces(typeof(StoreResponse<UserMappingOption>))]
         [ProducesErrorResponseType(typeof(ApiResponse))]
-        public async Task<ActionResult<List<UserMappingOption>>> GetMappings([FromRoute] Guid? id, [FromQuery] StoreRequest request)
+        [AllowAnonymous]
+        public async Task<ActionResult<StoreResponse<UserMappingOption>>> GetMappings([FromRoute] Guid? id, [FromQuery] StoreRequest request)
         {
+            var response = new StoreResponse<UserMappingOption>();
+
             try
             {
-                if (User == null || User.Identity == null)
-                {
-                    return Ok(new List<UserMappingOption>());
-                }
+                request = request ?? new StoreRequest();
+
+                // Total number of records
+                response.Total = dbContext.Mappings.Count();
 
                 var q = dbContext
                     .Mappings
                     .Include(row => row.User)
                     .AsQueryable();
-                q = q.Where(row => row.User.UserName == User.Identity.Name);
+
                 if (id != null)
                 {
                     q = q.Where(row => row.Id == id);
                 }
-                q = q
-                    .OrderBy(row => row.Name);
+
+                q = q.OrderBy(row => row.Name);
+
                 if (request != null)
                 {
                     if (request.Start != null)
@@ -100,8 +120,8 @@ namespace Fhirata.AspNetCore.Controllers.Api
                         q = q.Take(request.Limit.Value);
                     }
                 }
-                var list = await q.ToListAsync();
-                return Ok(list);
+                response.Data = await q.ToListAsync();
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -116,6 +136,8 @@ namespace Fhirata.AspNetCore.Controllers.Api
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<ActionResult<SaveMappingResponse>> SaveMapping([FromBody] SaveMappingRequest request)
         {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
             try
             {
                 var user = await dbContext.Users.FirstOrDefaultAsync(row => row.UserName == User.Identity.Name);
@@ -135,15 +157,21 @@ namespace Fhirata.AspNetCore.Controllers.Api
                 }
                 else
                 {
-                    row = await dbContext.Mappings.FirstOrDefaultAsync(row => row.Id == request.Id && row.User.Id == user.Id);
+                    row = await dbContext.Mappings.FirstOrDefaultAsync(row => row.Id == request.Id);
                     if (row == null)
                     {
                         return StatusCode(404, new SaveMappingResponse { Success = false, Message = "Record not found" });
+                    }
+                    if (row.UserId != user.Id)
+                    {
+                        return StatusCode(401, new SaveMappingResponse { Success = false, Message = "You have no permissions to edit this record" });
                     }
                 }
                 row.Name = request.Name;
                 row.Json = request.Json;
                 row.Expression = request.Expression;
+                row.CodeMappings = request.CodeMappings;
+                row.Server = request.Server;
 
                 await dbContext.SaveChangesAsync();
 

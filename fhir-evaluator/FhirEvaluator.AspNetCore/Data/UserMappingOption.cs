@@ -28,5 +28,15 @@ namespace Fhirata.AspNetCore.Data
 
         public DateTime? CreateDate { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public string? Server { get; set; }
+
+        /// <summary>
+        /// Some code mappings (LOINC, SNOMED etc) stored as text data (text, json, csv)
+        /// </summary>
+        public string? CodeMappings { get; set; }
+
     }
 }

@@ -11,6 +11,8 @@
         { name: "json", type: "string" },
         { name: "expression", type: "string" },
         { name: "result", type: "string" },
+        { name: "server", type: "string" },
+        { name: "codeMappings", type: "string" },
         { name: "createDate", type: "date", dateFormat: "c" }
     ],
 });

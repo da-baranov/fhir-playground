@@ -54,7 +54,7 @@ Ext.define('FHIRata.view.LoginDialog',{
                 },
                 {
                     xtype: "label",
-                    html: "Warning! This a demo web application. Don't enter logins and passwords which you use elsewere"
+                    html: "Warning! This is a demo web application. Don't enter logins and passwords which you use elsewere"
                 }
             ]
         }

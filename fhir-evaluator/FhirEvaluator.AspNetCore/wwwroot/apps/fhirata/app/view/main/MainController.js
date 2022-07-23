@@ -10,12 +10,11 @@ Ext.define('FHIRata.view.main.MainController', {
     alias: 'controller.main',
 
     onSessionLoad: function (sender, records, successful, operation) {
+        let user = undefined;
         if (successful && records.length) {
-            const user = records[0];
-            this.getViewModel().set("user", user);
-        } else {
-            this.getViewModel().set("user", {});
+            user = records[0];
         }
+        this.getViewModel().set("user", user);
     },
 
     updateSession: function () {
@@ -41,6 +40,7 @@ Ext.define('FHIRata.view.main.MainController', {
                             alert("Logout failed: " + response.message);
                         } else {
                             FHIRata.Ajax.setToken(undefined);
+                            Ext.fireEvent("logoff");
                             me.updateSession();
                         }
                     }
@@ -68,6 +68,7 @@ Ext.define('FHIRata.view.main.MainController', {
                     alert("Login failed: " + response.message);
                 } else {
                     FHIRata.Ajax.setToken(response.token);
+                    Ext.fireEvent("logon");
                     sender.close();
                     me.updateSession();
                 }

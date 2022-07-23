@@ -14,6 +14,8 @@ namespace Fhirata.AspNetCore.Models
 
         public string? Expression { get; set; }
 
-        public bool ConfirmOverwrite { get; set; }
+        public string? Server { get; set; }
+
+        public string? CodeMappings { get; set; }
     }
 }

@@ -15,6 +15,13 @@ Ext.define('FHIRata.view.MappingsListController', {
         }
     },
 
+    // Selects first row
+    onLoad: function (sender, records) {
+        if (records && records.length) {
+            this.getViewModel().set("row", records[0]);
+        }
+    },
+
     onCommandCreate: function () {
         const view = this.getView();
         const me = this;
@@ -88,5 +95,4 @@ Ext.define('FHIRata.view.MappingsListController', {
         const store = this.getStore("dataset");
         store.reload();
     }
-
 });
